@@ -3,7 +3,7 @@
 build() {
   # this is old, use fetch-local and podman compose
   if [[ "$1" == "local" ]]; then
-    (cd ../fetch-local \
+    (cd ../fetch-fetch-local \
       && exec ./helper.sh build-inventory-api);
   fi
   if [[ "$1" == "develop" ]]; then
@@ -17,16 +17,16 @@ build() {
 }
 
 build-db() {
-  (cd ../fetch-local && exec ./helper.sh build-inventory-db);
+  (cd ../fetch-fetch-local && exec ./helper.sh build-inventory-db);
 }
 
 refresh-db() {
   # Wipe db and build
-  (cd ../fetch-local && exec ./helper.sh wipe-inventory-db);
+  (cd ../fetch-fetch-local && exec ./helper.sh wipe-inventory-db);
   # Give the db a moment to catch its breath
   sleep 5;
   # Then rebuild from podman compose for schema
-  (cd ../fetch-local \
+  (cd ../fetch-fetch-local \
     && exec ./helper.sh build-inventory-api);
 }
 
@@ -95,7 +95,7 @@ from app.seed.seed_data import seed_location_address_values
 seed_location_address_values()
 ";
 
-    podman exec -it fetch-inventory-api python -c "$RUN_ADDRESS_MIGRATION"; 
+    podman exec -it fetch-inventory-api python -c "$RUN_ADDRESS_MIGRATION";
 }
 
 run-barcode-cleanup() {
