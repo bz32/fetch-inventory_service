@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 from datetime import datetime, timezone
 from sqlalchemy import func, distinct
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased, selectinload
 
 from app.database.session import get_session, commit_record
 from app.filter_params import SortParams, JobFilterParams
@@ -75,7 +75,15 @@ def get_verification_job_list(
     - Verification Job List Output: The paginated list of verification jobs.
     """
     # Create a query to select all Verification Job from the database
-    query = select(VerificationJob)
+    query = select(VerificationJob).options(
+        # Prevent row-by-row lazy loads for list response counts.
+        selectinload(VerificationJob.trays),
+        selectinload(VerificationJob.items),
+        selectinload(VerificationJob.non_tray_items),
+        # Keep user name fields, but avoid eager-loading all of each user's job relations.
+        selectinload(VerificationJob.user).lazyload("*"),
+        selectinload(VerificationJob.created_by).lazyload("*"),
+    )
 
     if unshelved:
         # retrieve completed verification jobs that haven't been shelved

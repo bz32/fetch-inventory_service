@@ -280,7 +280,7 @@ def update_accession_job(
     existing_accession_job = commit_record(session, existing_accession_job)
 
     # conditional to avoid transaction concurrency issues
-    if mutated_data.get("status") == "Completed":
+    if mutated_data.get("status") == "Completed" and original_status != "Completed":
         if existing_accession_job.items:
             items_barcode_ids = [
                 item.barcode_id for item in existing_accession_job.items
@@ -334,6 +334,9 @@ def update_accession_job(
             original_status,
             audit_info=audit_info
         )
+        session.refresh(existing_accession_job)
+    elif mutated_data.get("status") == "Completed" and original_status == "Completed":
+        # Idempotent guard: avoid re-running completion side effects for repeated requests.
         session.refresh(existing_accession_job)
     else:
         audit_info = getattr(session, "audit_info", {"name": "System", "id": "0"}).copy()

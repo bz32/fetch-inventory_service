@@ -36,6 +36,17 @@ def complete_accession_job(accession_job: AccessionJob, original_status, audit_i
     with session_manager() as session:
         # update accession job run_time and last_transition
         start_session_with_audit_info(audit_info, session)
+
+        # Idempotent guard: if a verification job already exists for this accession job,
+        # this completion already ran (or is running in a concurrent worker).
+        existing_verification_job = session.exec(
+            select(VerificationJob).where(
+                VerificationJob.accession_job_id == accession_job.id
+            )
+        ).first()
+        if existing_verification_job:
+            return
+
         if original_status == "Running":
             time_difference = datetime.now(timezone.utc) - accession_job.last_transition
             accession_job.run_time += time_difference
